@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -55,6 +56,7 @@
             width: 100%;
             max-width: 700px;
             border-radius: 12px;
+            background: black;
         }
 
         button {
@@ -75,6 +77,11 @@
         #detectButton {
             background: #3b82f6;
             color: white;
+        }
+
+        #detectButton:disabled {
+            background: #64748b;
+            cursor: not-allowed;
         }
 
         #results {
@@ -103,6 +110,18 @@
 
         #status {
             color: #cbd5e1;
+        }
+
+        .loading {
+            color: #facc15;
+        }
+
+        .error {
+            color: #f87171;
+        }
+
+        .success {
+            color: #86efac;
         }
 
     </style>
@@ -141,8 +160,12 @@
     </button>
 
 
-    <button id="detectButton">
+    <button
+        id="detectButton"
+        disabled>
+
         🔍 Detect Component
+
     </button>
 
 
@@ -161,123 +184,202 @@
 </div>
 
 
+<!-- Hidden canvas used to capture camera image -->
+
+<canvas
+    id="canvas"
+    style="display:none;">
+</canvas>
+
+
 <script>
 
-const video =
-    document.getElementById("camera");
+    // ==========================================
+    // RENDER BACKEND
+    // ==========================================
 
-const startButton =
-    document.getElementById("startButton");
-
-const detectButton =
-    document.getElementById("detectButton");
-
-const status =
-    document.getElementById("status");
-
-const detections =
-    document.getElementById("detections");
+    const API_URL =
+        "https://electronics-ai-1.onrender.com/predict";
 
 
-/* =========================
-   START CAMERA
-========================= */
+    // ==========================================
+    // HTML ELEMENTS
+    // ==========================================
 
-startButton.addEventListener(
-    "click",
-    async () => {
+    const video =
+        document.getElementById("camera");
 
-        try {
+    const canvas =
+        document.getElementById("canvas");
 
-            const stream =
-                await navigator.mediaDevices
-                .getUserMedia({
+    const startButton =
+        document.getElementById("startButton");
 
-                    video: {
-                        facingMode: "environment"
-                    },
+    const detectButton =
+        document.getElementById("detectButton");
 
-                    audio: false
+    const status =
+        document.getElementById("status");
 
-                });
+    const detectionsDiv =
+        document.getElementById("detections");
 
-            video.srcObject = stream;
 
-            status.innerText =
-                "Camera is running";
+    let cameraStarted = false;
+
+
+    // ==========================================
+    // START CAMERA
+    // ==========================================
+
+    startButton.addEventListener(
+        "click",
+        async function () {
+
+            try {
+
+                status.className = "loading";
+
+                status.textContent =
+                    "Starting camera...";
+
+                const stream =
+                    await navigator.mediaDevices.getUserMedia({
+
+                        video: {
+                            facingMode: "environment"
+                        },
+
+                        audio: false
+
+                    });
+
+
+                video.srcObject = stream;
+
+                cameraStarted = true;
+
+                detectButton.disabled = false;
+
+                status.className = "success";
+
+                status.textContent =
+                    "Camera ready. Point it at an electronics component.";
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Camera error:",
+                    error
+                );
+
+                status.className = "error";
+
+                status.textContent =
+                    "Could not access camera. Please allow camera permission.";
+
+            }
 
         }
-
-        catch (error) {
-
-            console.error(error);
-
-            status.innerText =
-                "Camera permission denied";
-
-        }
-
-    }
-);
+    );
 
 
-/* =========================
-   DETECT COMPONENT
-========================= */
+    // ==========================================
+    // DETECT COMPONENT
+    // ==========================================
 
-detectButton.addEventListener(
-    "click",
-    async () => {
+    detectButton.addEventListener(
+        "click",
+        async function () {
 
-        if (!video.srcObject) {
+            if (!cameraStarted) {
 
-            status.innerText =
-                "Start the camera first";
+                status.textContent =
+                    "Start the camera first.";
 
-            return;
+                return;
 
-        }
-
-
-        status.innerText =
-            "AI is detecting...";
-
-        detections.innerHTML = "";
+            }
 
 
-        /* Create image from camera */
+            try {
 
-        const canvas =
-            document.createElement("canvas");
+                detectButton.disabled = true;
 
-        canvas.width =
-            video.videoWidth;
+                status.className = "loading";
 
-        canvas.height =
-            video.videoHeight;
+                status.textContent =
+                    "AI is analyzing the image...";
 
-
-        const context =
-            canvas.getContext("2d");
+                detectionsDiv.innerHTML = "";
 
 
-        context.drawImage(
-            video,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
+                // ----------------------------------
+                // Get video dimensions
+                // ----------------------------------
+
+                const width =
+                    video.videoWidth;
+
+                const height =
+                    video.videoHeight;
 
 
-        /* Convert image to JPEG */
+                if (width === 0 || height === 0) {
 
-        canvas.toBlob(
-            async (blob) => {
+                    throw new Error(
+                        "Camera image is not ready"
+                    );
+
+                }
+
+
+                // ----------------------------------
+                // Draw current camera frame
+                // ----------------------------------
+
+                canvas.width = width;
+
+                canvas.height = height;
+
+
+                const context =
+                    canvas.getContext("2d");
+
+
+                context.drawImage(
+                    video,
+                    0,
+                    0,
+                    width,
+                    height
+                );
+
+
+                // ----------------------------------
+                // Convert image to JPEG
+                // ----------------------------------
+
+                const blob =
+                    await new Promise(
+                        resolve =>
+
+                            canvas.toBlob(
+                                resolve,
+                                "image/jpeg",
+                                0.85
+                            )
+                    );
+
+
+                // ----------------------------------
+                // Create form data
+                // ----------------------------------
 
                 const formData =
                     new FormData();
-
 
                 formData.append(
                     "image",
@@ -286,112 +388,182 @@ detectButton.addEventListener(
                 );
 
 
-                try {
-
-                    /* Send image to Flask */
-
-                    const response =
-                        await fetch(
-                            "http://127.0.0.1:5000/predict",
-                            {
-                                method: "POST",
-                                body: formData
-                            }
-                        );
+                console.log(
+                    "Sending image to:",
+                    API_URL
+                );
 
 
-                    const data =
-                        await response.json();
+                // ----------------------------------
+                // Send to Render
+                // ----------------------------------
 
-
-                    if (data.error) {
-
-                        status.innerText =
-                            data.error;
-
-                        return;
-
-                    }
-
-
-                    if (
-                        data.detections.length === 0
-                    ) {
-
-                        status.innerText =
-                            "No component detected";
-
-                        detections.innerHTML =
-                            "<p>Try moving the component closer.</p>";
-
-                        return;
-
-                    }
-
-
-                    status.innerText =
-                        "Detection complete";
-
-
-                    /* Display detections */
-
-                    data.detections.forEach(
-                        item => {
-
-                            const div =
-                                document.createElement(
-                                    "div"
-                                );
-
-                            div.className =
-                                "component";
-
-
-                            div.innerHTML = `
-
-                                <div
-                                    class="component-name">
-                                    ${item.class}
-                                </div>
-
-                                <div
-                                    class="confidence">
-                                    Confidence:
-                                    ${item.confidence}%
-                                </div>
-
-                            `;
-
-
-                            detections.appendChild(
-                                div
-                            );
-
+                const response =
+                    await fetch(
+                        API_URL,
+                        {
+                            method: "POST",
+                            body: formData
                         }
+                    );
+
+
+                console.log(
+                    "Response status:",
+                    response.status
+                );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Backend returned HTTP " +
+                        response.status
                     );
 
                 }
 
-                catch (error) {
 
-                    console.error(error);
+                const data =
+                    await response.json();
 
-                    status.innerText =
-                        "Could not connect to AI backend";
+
+                console.log(
+                    "AI response:",
+                    data
+                );
+
+
+                // ----------------------------------
+                // Display results
+                // ----------------------------------
+
+                if (
+                    !data.success &&
+                    data.error
+                ) {
+
+                    throw new Error(
+                        data.error
+                    );
 
                 }
 
-            },
 
-            "image/jpeg"
+                if (
+                    !data.detections ||
+                    data.detections.length === 0
+                ) {
 
-        );
+                    status.className = "";
 
-    }
-);
+                    status.textContent =
+                        "No electronics component detected.";
+
+                    return;
+
+                }
+
+
+                status.className =
+                    "success";
+
+                status.textContent =
+                    data.detections.length +
+                    " component(s) detected.";
+
+
+                // ----------------------------------
+                // Show each detection
+                // ----------------------------------
+
+                data.detections.forEach(
+                    function (detection) {
+
+                        const component =
+                            document.createElement(
+                                "div"
+                            );
+
+                        component.className =
+                            "component";
+
+
+                        const name =
+                            document.createElement(
+                                "div"
+                            );
+
+                        name.className =
+                            "component-name";
+
+                        name.textContent =
+                            "🔧 " +
+                            detection.class;
+
+
+                        const confidence =
+                            document.createElement(
+                                "div"
+                            );
+
+                        confidence.className =
+                            "confidence";
+
+                        confidence.textContent =
+                            "Confidence: " +
+                            detection.confidence +
+                            "%";
+
+
+                        component.appendChild(
+                            name
+                        );
+
+                        component.appendChild(
+                            confidence
+                        );
+
+
+                        detectionsDiv.appendChild(
+                            component
+                        );
+
+                    }
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "AI backend error:",
+                    error
+                );
+
+                status.className =
+                    "error";
+
+                status.textContent =
+                    "Could not connect to AI backend: " +
+                    error.message;
+
+            }
+
+            finally {
+
+                detectButton.disabled =
+                    false;
+
+            }
+
+        }
+    );
 
 </script>
+
 
 </body>
 
 </html>
+```
