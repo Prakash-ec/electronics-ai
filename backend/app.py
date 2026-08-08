@@ -1,3 +1,4 @@
+```python
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from ultralytics import YOLO
@@ -6,49 +7,71 @@ import numpy as np
 import os
 import traceback
 
+# ============================================================
+# FLASK APP
+# ============================================================
+
 app = Flask(__name__)
 
-# Allow frontend requests
+# ============================================================
+# CORS CONFIGURATION
+# ============================================================
+
 CORS(
     app,
     resources={
         r"/*": {
             "origins": "*"
         }
-    }
+    },
+    supports_credentials=False,
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"]
 )
 
+
+# Extra CORS headers for every response
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
+
 # ============================================================
-# PATH CONFIGURATION
+# PROJECT PATH
 # ============================================================
 
-# backend/app.py
-BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+# app.py is inside:
+#
+# electronics-ai/
+# ├── backend/
+# │   └── app.py
+# ├── model/
+# │   └── best.pt
+# └── frontend/
+#     └── index.html
 
-# D:\electronics-ai
-PROJECT_DIR = os.path.dirname(BACKEND_DIR)
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
 
-# D:\electronics-ai\model\best.pt
 MODEL_PATH = os.path.join(
-    PROJECT_DIR,
+    BASE_DIR,
     "model",
     "best.pt"
 )
 
-print("=" * 60)
-print("ELECTRONICS AI BACKEND")
-print("=" * 60)
+print("========================================")
+print("Electronics AI Backend Starting")
+print("========================================")
+print("BASE_DIR:", BASE_DIR)
+print("MODEL_PATH:", MODEL_PATH)
+print("MODEL EXISTS:", os.path.exists(MODEL_PATH))
 
-print("Backend directory:")
-print(BACKEND_DIR)
-
-print("Project directory:")
-print(PROJECT_DIR)
-
-print("Model path:")
-print(MODEL_PATH)
-
-print("Model exists:", os.path.exists(MODEL_PATH))
 
 # ============================================================
 # LOAD YOLO MODEL
@@ -58,49 +81,40 @@ model = None
 model_error = None
 
 try:
-
     if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(
+            f"Model file not found: {MODEL_PATH}"
+        )
 
-        model_error = f"Model file not found: {MODEL_PATH}"
+    print("Loading YOLO model...")
 
-        print("ERROR:", model_error)
+    model = YOLO(MODEL_PATH)
 
-    else:
-
-        print("Loading YOLO model...")
-
-        model = YOLO(MODEL_PATH)
-
-        print("YOLO model loaded successfully!")
-
-        print("Classes:")
-
-        print(model.names)
+    print("YOLO model loaded successfully!")
+    print("Classes:", model.names)
 
 except Exception as e:
-
     model_error = str(e)
 
-    print("FAILED TO LOAD YOLO MODEL")
+    print("========================================")
+    print("YOLO MODEL LOAD ERROR")
+    print("========================================")
     print(model_error)
 
     traceback.print_exc()
 
 
 # ============================================================
-# HOME
+# HOME ROUTE
 # ============================================================
 
 @app.route("/", methods=["GET"])
 def home():
-
     return jsonify({
         "success": True,
+        "status": "healthy",
         "message": "Electronics AI Backend Running",
-        "model_loaded": model is not None,
-        "model_path": MODEL_PATH,
-        "model_exists": os.path.exists(MODEL_PATH),
-        "model_error": model_error
+        "model_loaded": model is not None
     })
 
 
@@ -111,48 +125,70 @@ def home():
 @app.route("/health", methods=["GET"])
 def health():
 
-    if model is None:
-
+    if model is not None:
         return jsonify({
-            "success": False,
-            "status": "error",
-            "message": "YOLO model is not loaded",
-            "model_exists": os.path.exists(MODEL_PATH),
-            "model_path": MODEL_PATH,
-            "error": model_error
-        }), 500
+            "success": True,
+            "status": "healthy",
+            "model_loaded": True,
+            "message": "YOLO model is loaded",
+            "classes": model.names
+        })
 
     return jsonify({
-        "success": True,
-        "status": "healthy",
-        "message": "YOLO model is loaded",
-        "model_loaded": True,
-        "classes": model.names
-    })
+        "success": False,
+        "status": "unhealthy",
+        "model_loaded": False,
+        "message": "YOLO model is not loaded",
+        "error": model_error
+    }), 500
 
 
 # ============================================================
-# PREDICTION
+# OPTIONS / CORS PREFLIGHT
+# ============================================================
+
+@app.route("/predict", methods=["OPTIONS"])
+def predict_options():
+
+    response = jsonify({
+        "success": True
+    })
+
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+
+    return response
+
+
+# ============================================================
+# PREDICTION API
 # ============================================================
 
 @app.route("/predict", methods=["POST"])
 def predict():
 
-    print("=" * 60)
+    print("========================================")
     print("Prediction request received")
+    print("========================================")
 
+    # --------------------------------------------------------
     # Check model
+    # --------------------------------------------------------
+
     if model is None:
 
         print("ERROR: YOLO model is not loaded")
 
         return jsonify({
             "success": False,
-            "error": "YOLO model is not loaded",
-            "details": model_error
-        }), 503
+            "error": "YOLO model is not loaded"
+        }), 500
 
+    # --------------------------------------------------------
     # Check image
+    # --------------------------------------------------------
+
     if "image" not in request.files:
 
         print("ERROR: No image received")
@@ -165,12 +201,16 @@ def predict():
     try:
 
         # ----------------------------------------------------
-        # Read uploaded image
+        # Get uploaded file
         # ----------------------------------------------------
 
         file = request.files["image"]
 
-        print("Received file:", file.filename)
+        print("Image filename:", file.filename)
+
+        # ----------------------------------------------------
+        # Read image bytes
+        # ----------------------------------------------------
 
         image_bytes = file.read()
 
@@ -178,17 +218,27 @@ def predict():
 
             return jsonify({
                 "success": False,
-                "error": "Empty image"
+                "error": "Empty image file"
             }), 400
 
+        print(
+            "Image size:",
+            len(image_bytes),
+            "bytes"
+        )
+
         # ----------------------------------------------------
-        # Convert bytes to OpenCV image
+        # Convert bytes -> NumPy
         # ----------------------------------------------------
 
         image_array = np.frombuffer(
             image_bytes,
             dtype=np.uint8
         )
+
+        # ----------------------------------------------------
+        # Decode image
+        # ----------------------------------------------------
 
         image = cv2.imdecode(
             image_array,
@@ -197,13 +247,15 @@ def predict():
 
         if image is None:
 
+            print("ERROR: Could not decode image")
+
             return jsonify({
                 "success": False,
                 "error": "Invalid image"
             }), 400
 
         print(
-            "Image received:",
+            "Image decoded:",
             image.shape
         )
 
@@ -219,51 +271,53 @@ def predict():
             verbose=False
         )
 
+        # ----------------------------------------------------
+        # Get result
+        # ----------------------------------------------------
+
         result = results[0]
 
         detections = []
 
         # ----------------------------------------------------
-        # Extract detections
+        # Process bounding boxes
         # ----------------------------------------------------
 
-        if result.boxes is not None:
+        for box in result.boxes:
 
-            for box in result.boxes:
+            class_id = int(
+                box.cls[0]
+            )
 
-                class_id = int(
-                    box.cls[0].item()
-                )
+            confidence = float(
+                box.conf[0]
+            )
 
-                confidence = float(
-                    box.conf[0].item()
-                )
+            class_name = model.names[
+                class_id
+            ]
 
-                class_name = model.names[
-                    class_id
+            x1, y1, x2, y2 = map(
+                int,
+                box.xyxy[0]
+            )
+
+            detections.append({
+
+                "class": class_name,
+
+                "confidence": round(
+                    confidence * 100,
+                    2
+                ),
+
+                "box": [
+                    x1,
+                    y1,
+                    x2,
+                    y2
                 ]
-
-                x1, y1, x2, y2 = map(
-                    int,
-                    box.xyxy[0].tolist()
-                )
-
-                detections.append({
-
-                    "class": class_name,
-
-                    "confidence": round(
-                        confidence * 100,
-                        2
-                    ),
-
-                    "box": [
-                        x1,
-                        y1,
-                        x2,
-                        y2
-                    ]
-                })
+            })
 
         print(
             "Detections:",
@@ -271,12 +325,14 @@ def predict():
         )
 
         # ----------------------------------------------------
-        # Response
+        # Return prediction
         # ----------------------------------------------------
 
         return jsonify({
 
             "success": True,
+
+            "message": "Prediction successful",
 
             "detections": detections,
 
@@ -286,11 +342,13 @@ def predict():
 
     except Exception as e:
 
-        print("=" * 60)
+        print("========================================")
         print("PREDICTION ERROR")
+        print("========================================")
+
         print(str(e))
+
         traceback.print_exc()
-        print("=" * 60)
 
         return jsonify({
 
@@ -314,12 +372,13 @@ if __name__ == "__main__":
         )
     )
 
-    print("=" * 60)
-    print(f"Starting Flask server on port {port}")
-    print("=" * 60)
+    print(
+        f"Starting Flask server on port {port}"
+    )
 
     app.run(
         host="0.0.0.0",
         port=port,
         debug=False
     )
+
