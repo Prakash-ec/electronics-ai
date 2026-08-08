@@ -1,0 +1,13 @@
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 11
+names: ['Battery', 'Capacitor', 'Display', 'IC', 'Push button', 'Relay', 'Resistor', 'Solar', 'Transistor', 'motor', 'switch']
+
+roboflow:
+  workspace: basic-electronics-components
+  project: basic-electronic-component
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/basic-electronics-components/basic-electronic-component/dataset/2

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Electronics AI</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+        }
+
+        header {
+            text-align: center;
+            padding: 25px;
+            background: #1e293b;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        header p {
+            color: #cbd5e1;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .camera-box {
+            background: #020617;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        video {
+            width: 100%;
+            max-width: 700px;
+            border-radius: 12px;
+        }
+
+        button {
+            padding: 14px 25px;
+            margin: 15px 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #startButton {
+            background: #22c55e;
+            color: white;
+        }
+
+        #detectButton {
+            background: #3b82f6;
+            color: white;
+        }
+
+        #results {
+            margin-top: 25px;
+            padding: 20px;
+            background: #1e293b;
+            border-radius: 15px;
+        }
+
+        .component {
+            padding: 15px;
+            margin: 10px 0;
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        .component-name {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .confidence {
+            margin-top: 5px;
+            color: #86efac;
+        }
+
+        #status {
+            color: #cbd5e1;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>🔧 Electronics AI</h1>
+
+    <p>
+        AI-powered electronics component detection
+    </p>
+
+</header>
+
+
+<div class="container">
+
+    <div class="camera-box">
+
+        <video
+            id="camera"
+            autoplay
+            playsinline>
+        </video>
+
+    </div>
+
+
+    <button id="startButton">
+        📷 Start Camera
+    </button>
+
+
+    <button id="detectButton">
+        🔍 Detect Component
+    </button>
+
+
+    <div id="results">
+
+        <h2>Detection Results</h2>
+
+        <p id="status">
+            Camera not started
+        </p>
+
+        <div id="detections"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const video =
+    document.getElementById("camera");
+
+const startButton =
+    document.getElementById("startButton");
+
+const detectButton =
+    document.getElementById("detectButton");
+
+const status =
+    document.getElementById("status");
+
+const detections =
+    document.getElementById("detections");
+
+
+/* =========================
+   START CAMERA
+========================= */
+
+startButton.addEventListener(
+    "click",
+    async () => {
+
+        try {
+
+            const stream =
+                await navigator.mediaDevices
+                .getUserMedia({
+
+                    video: {
+                        facingMode: "environment"
+                    },
+
+                    audio: false
+
+                });
+
+            video.srcObject = stream;
+
+            status.innerText =
+                "Camera is running";
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            status.innerText =
+                "Camera permission denied";
+
+        }
+
+    }
+);
+
+
+/* =========================
+   DETECT COMPONENT
+========================= */
+
+detectButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!video.srcObject) {
+
+            status.innerText =
+                "Start the camera first";
+
+            return;
+
+        }
+
+
+        status.innerText =
+            "AI is detecting...";
+
+        detections.innerHTML = "";
+
+
+        /* Create image from camera */
+
+        const canvas =
+            document.createElement("canvas");
+
+        canvas.width =
+            video.videoWidth;
+
+        canvas.height =
+            video.videoHeight;
+
+
+        const context =
+            canvas.getContext("2d");
+
+
+        context.drawImage(
+            video,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        /* Convert image to JPEG */
+
+        canvas.toBlob(
+            async (blob) => {
+
+                const formData =
+                    new FormData();
+
+
+                formData.append(
+                    "image",
+                    blob,
+                    "camera.jpg"
+                );
+
+
+                try {
+
+                    /* Send image to Flask */
+
+                    const response =
+                        await fetch(
+                            "http://127.0.0.1:5000/predict",
+                            {
+                                method: "POST",
+                                body: formData
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (data.error) {
+
+                        status.innerText =
+                            data.error;
+
+                        return;
+
+                    }
+
+
+                    if (
+                        data.detections.length === 0
+                    ) {
+
+                        status.innerText =
+                            "No component detected";
+
+                        detections.innerHTML =
+                            "<p>Try moving the component closer.</p>";
+
+                        return;
+
+                    }
+
+
+                    status.innerText =
+                        "Detection complete";
+
+
+                    /* Display detections */
+
+                    data.detections.forEach(
+                        item => {
+
+                            const div =
+                                document.createElement(
+                                    "div"
+                                );
+
+                            div.className =
+                                "component";
+
+
+                            div.innerHTML = `
+
+                                <div
+                                    class="component-name">
+                                    ${item.class}
+                                </div>
+
+                                <div
+                                    class="confidence">
+                                    Confidence:
+                                    ${item.confidence}%
+                                </div>
+
+                            `;
+
+
+                            detections.appendChild(
+                                div
+                            );
+
+                        }
+                    );
+
+                }
+
+                catch (error) {
+
+                    console.error(error);
+
+                    status.innerText =
+                        "Could not connect to AI backend";
+
+                }
+
+            },
+
+            "image/jpeg"
+
+        );
+
+    }
+);
+
+</script>
+
+</body>
+
+</html>
