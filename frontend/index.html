@@ -4,127 +4,191 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-    <title>Electronics AI</title>
+<title>Electronics AI</title>
 
-    <style>
+<style>
 
-        * {
-            box-sizing: border-box;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: white;
-        }
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+}
 
-        header {
-            text-align: center;
-            padding: 25px;
-            background: #1e293b;
-        }
+header {
+    text-align: center;
+    padding: 25px;
+    background: #1e293b;
+}
 
-        header h1 {
-            margin: 0;
-            font-size: 32px;
-        }
+header h1 {
+    margin: 0;
+    font-size: 32px;
+}
 
-        header p {
-            color: #cbd5e1;
-        }
+header p {
+    color: #cbd5e1;
+}
 
-        .container {
-            max-width: 900px;
-            margin: auto;
-            padding: 25px;
-            text-align: center;
-        }
+.container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 25px;
+}
 
-        .camera-box {
-            background: #020617;
-            padding: 15px;
-            border-radius: 15px;
-        }
+/* Two columns */
 
-        video {
-            width: 100%;
-            max-width: 700px;
-            border-radius: 12px;
-            background: black;
-        }
+.input-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
 
-        button {
-            padding: 14px 25px;
-            margin: 15px 5px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-        }
+/* Camera and upload boxes */
 
-        #startButton {
-            background: #22c55e;
-            color: white;
-        }
+.camera-box,
+.upload-box {
+    background: #020617;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    min-height: 350px;
+}
 
-        #detectButton {
-            background: #3b82f6;
-            color: white;
-        }
+.camera-box h2,
+.upload-box h2 {
+    margin-top: 0;
+}
 
-        #detectButton:disabled {
-            background: #64748b;
-            cursor: not-allowed;
-        }
+/* Camera */
 
-        #results {
-            margin-top: 25px;
-            padding: 20px;
-            background: #1e293b;
-            border-radius: 15px;
-        }
+video {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 12px;
+    background: black;
+}
 
-        .component {
-            padding: 15px;
-            margin: 10px 0;
-            background: #334155;
-            border-radius: 10px;
-        }
+/* Uploaded image */
 
-        .component-name {
-            font-size: 20px;
-            font-weight: bold;
-        }
+#preview {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 12px;
+    background: black;
+    display: none;
+}
 
-        .confidence {
-            margin-top: 5px;
-            color: #86efac;
-        }
+/* File input */
 
-        #status {
-            color: #cbd5e1;
-        }
+input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    background: #1e293b;
+    color: white;
+    border-radius: 8px;
+}
 
-        .loading {
-            color: #facc15;
-        }
+/* Buttons */
 
-        .error {
-            color: #f87171;
-        }
+button {
+    padding: 14px 25px;
+    margin: 10px 5px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
 
-        .success {
-            color: #86efac;
-        }
+#startButton {
+    background: #22c55e;
+    color: white;
+}
 
-    </style>
+#cameraDetectButton {
+    background: #3b82f6;
+    color: white;
+}
+
+#imageDetectButton {
+    background: #a855f7;
+    color: white;
+}
+
+button:disabled {
+    background: #64748b !important;
+    cursor: not-allowed;
+}
+
+/* Results */
+
+#results {
+    margin-top: 25px;
+    padding: 20px;
+    background: #1e293b;
+    border-radius: 15px;
+}
+
+.component {
+    padding: 15px;
+    margin: 10px 0;
+    background: #334155;
+    border-radius: 10px;
+}
+
+.component-name {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.confidence {
+    margin-top: 5px;
+    color: #86efac;
+}
+
+#status {
+    color: #cbd5e1;
+}
+
+.loading {
+    color: #facc15 !important;
+}
+
+.error {
+    color: #f87171 !important;
+}
+
+.success {
+    color: #86efac !important;
+}
+
+/* Mobile */
+
+@media (max-width: 700px) {
+
+    .input-section {
+        grid-template-columns: 1fr;
+    }
+
+    header h1 {
+        font-size: 26px;
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -133,58 +197,102 @@
 
 <header>
 
-    <h1>🔧 Electronics AI</h1>
+<h1>🔧 Electronics AI</h1>
 
-    <p>
-        AI-powered electronics component detection
-    </p>
+<p>
+AI-powered electronics component detection
+</p>
 
 </header>
 
 
 <div class="container">
 
-    <div class="camera-box">
 
-        <video
-            id="camera"
-            autoplay
-            playsinline>
-        </video>
-
-    </div>
+<div class="input-section">
 
 
-    <button id="startButton">
-        📷 Start Camera
-    </button>
+<!-- ========================= -->
+<!-- CAMERA COLUMN -->
+<!-- ========================= -->
 
+<div class="camera-box">
 
-    <button
-        id="detectButton"
-        disabled>
+<h2>📷 Camera</h2>
 
-        🔍 Detect Component
+<video
+    id="camera"
+    autoplay
+    playsinline>
+</video>
 
-    </button>
+<br>
 
+<button id="startButton">
+📷 Start Camera
+</button>
 
-    <div id="results">
-
-        <h2>Detection Results</h2>
-
-        <p id="status">
-            Camera not started
-        </p>
-
-        <div id="detections"></div>
-
-    </div>
+<button
+    id="cameraDetectButton"
+    disabled>
+🔍 Detect
+</button>
 
 </div>
 
 
-<!-- Hidden canvas used to capture camera image -->
+<!-- ========================= -->
+<!-- IMAGE UPLOAD COLUMN -->
+<!-- ========================= -->
+
+<div class="upload-box">
+
+<h2>🖼️ Upload Picture</h2>
+
+<img
+    id="preview"
+    alt="Selected image">
+
+<input
+    type="file"
+    id="imageInput"
+    accept="image/*">
+
+<br>
+
+<button
+    id="imageDetectButton"
+    disabled>
+🔍 Detect Picture
+</button>
+
+</div>
+
+
+</div>
+
+
+<!-- ========================= -->
+<!-- RESULTS -->
+<!-- ========================= -->
+
+<div id="results">
+
+<h2>Detection Results</h2>
+
+<p id="status">
+Choose a camera or upload an image.
+</p>
+
+<div id="detections"></div>
+
+</div>
+
+
+</div>
+
+
+<!-- Hidden canvas -->
 
 <canvas
     id="canvas"
@@ -194,374 +302,532 @@
 
 <script>
 
-    // ==========================================
-    // RENDER BACKEND
-    // ==========================================
 
-    const API_URL =
-        "https://electronics-ai-1.onrender.com/predict";
+// ==========================================
+// RENDER BACKEND
+// ==========================================
 
-
-    // ==========================================
-    // HTML ELEMENTS
-    // ==========================================
-
-    const video =
-        document.getElementById("camera");
-
-    const canvas =
-        document.getElementById("canvas");
-
-    const startButton =
-        document.getElementById("startButton");
-
-    const detectButton =
-        document.getElementById("detectButton");
-
-    const status =
-        document.getElementById("status");
-
-    const detectionsDiv =
-        document.getElementById("detections");
+const API_URL =
+    "https://electronics-ai-1.onrender.com/predict";
 
 
-    let cameraStarted = false;
+// ==========================================
+// ELEMENTS
+// ==========================================
+
+const video =
+    document.getElementById("camera");
+
+const canvas =
+    document.getElementById("canvas");
+
+const startButton =
+    document.getElementById("startButton");
+
+const cameraDetectButton =
+    document.getElementById(
+        "cameraDetectButton"
+    );
+
+const imageInput =
+    document.getElementById("imageInput");
+
+const preview =
+    document.getElementById("preview");
+
+const imageDetectButton =
+    document.getElementById(
+        "imageDetectButton"
+    );
+
+const status =
+    document.getElementById("status");
+
+const detectionsDiv =
+    document.getElementById(
+        "detections"
+    );
 
 
-    // ==========================================
-    // START CAMERA
-    // ==========================================
+// ==========================================
+// START CAMERA
+// ==========================================
 
-    startButton.addEventListener(
-        "click",
-        async function () {
+startButton.addEventListener(
+    "click",
+    async function() {
 
-            try {
+        try {
 
-                status.className = "loading";
+            status.className =
+                "loading";
 
-                status.textContent =
-                    "Starting camera...";
-
-                const stream =
-                    await navigator.mediaDevices.getUserMedia({
-
-                        video: {
-                            facingMode: "environment"
-                        },
-
-                        audio: false
-
-                    });
+            status.textContent =
+                "Starting camera...";
 
 
-                video.srcObject = stream;
+            const stream =
+                await navigator.mediaDevices
+                .getUserMedia({
 
-                cameraStarted = true;
+                    video: {
+                        facingMode:
+                            "environment"
+                    },
 
-                detectButton.disabled = false;
+                    audio: false
 
-                status.className = "success";
+                });
 
-                status.textContent =
-                    "Camera ready. Point it at an electronics component.";
 
-            }
+            video.srcObject =
+                stream;
 
-            catch (error) {
 
-                console.error(
-                    "Camera error:",
-                    error
+            cameraDetectButton.disabled =
+                false;
+
+
+            status.className =
+                "success";
+
+            status.textContent =
+                "Camera ready.";
+
+        }
+
+        catch(error) {
+
+            console.error(
+                "Camera error:",
+                error
+            );
+
+            status.className =
+                "error";
+
+            status.textContent =
+                "Could not access camera.";
+
+        }
+
+    }
+);
+
+
+// ==========================================
+// IMAGE UPLOAD
+// ==========================================
+
+imageInput.addEventListener(
+    "change",
+    function() {
+
+        const file =
+            imageInput.files[0];
+
+
+        if (!file) {
+
+            return;
+
+        }
+
+
+        // Show image preview
+
+        const imageURL =
+            URL.createObjectURL(file);
+
+
+        preview.src =
+            imageURL;
+
+
+        preview.style.display =
+            "block";
+
+
+        imageDetectButton.disabled =
+            false;
+
+
+        status.className =
+            "";
+
+        status.textContent =
+            "Picture selected. Click Detect Picture.";
+
+    }
+);
+
+
+// ==========================================
+// CAMERA DETECTION
+// ==========================================
+
+cameraDetectButton.addEventListener(
+    "click",
+    async function() {
+
+        try {
+
+            cameraDetectButton.disabled =
+                true;
+
+
+            status.className =
+                "loading";
+
+            status.textContent =
+                "AI is analyzing camera image...";
+
+
+            const width =
+                video.videoWidth;
+
+            const height =
+                video.videoHeight;
+
+
+            canvas.width =
+                width;
+
+            canvas.height =
+                height;
+
+
+            const context =
+                canvas.getContext("2d");
+
+
+            context.drawImage(
+                video,
+                0,
+                0,
+                width,
+                height
+            );
+
+
+            const blob =
+                await new Promise(
+                    resolve =>
+
+                    canvas.toBlob(
+                        resolve,
+                        "image/jpeg",
+                        0.85
+                    )
                 );
 
-                status.className = "error";
 
-                status.textContent =
-                    "Could not access camera. Please allow camera permission.";
+            const formData =
+                new FormData();
 
-            }
+
+            formData.append(
+                "image",
+                blob,
+                "camera.jpg"
+            );
+
+
+            await sendToAI(
+                formData
+            );
+
+        }
+
+        catch(error) {
+
+            console.error(
+                error
+            );
+
+            status.className =
+                "error";
+
+            status.textContent =
+                "Camera detection failed.";
+
+        }
+
+        finally {
+
+            cameraDetectButton.disabled =
+                false;
+
+        }
+
+    }
+);
+
+
+// ==========================================
+// UPLOADED IMAGE DETECTION
+// ==========================================
+
+imageDetectButton.addEventListener(
+    "click",
+    async function() {
+
+        const file =
+            imageInput.files[0];
+
+
+        if (!file) {
+
+            status.textContent =
+                "Please select an image.";
+
+            return;
+
+        }
+
+
+        try {
+
+            imageDetectButton.disabled =
+                true;
+
+
+            status.className =
+                "loading";
+
+            status.textContent =
+                "AI is analyzing your picture...";
+
+
+            const formData =
+                new FormData();
+
+
+            formData.append(
+                "image",
+                file
+            );
+
+
+            await sendToAI(
+                formData
+            );
+
+        }
+
+        catch(error) {
+
+            console.error(
+                error
+            );
+
+            status.className =
+                "error";
+
+            status.textContent =
+                "Image detection failed.";
+
+        }
+
+        finally {
+
+            imageDetectButton.disabled =
+                false;
+
+        }
+
+    }
+);
+
+
+// ==========================================
+// SEND IMAGE TO YOLO
+// ==========================================
+
+async function sendToAI(
+    formData
+) {
+
+    try {
+
+        console.log(
+            "Sending image to:",
+            API_URL
+        );
+
+
+        const response =
+            await fetch(
+                API_URL,
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        console.log(
+            "Response:",
+            response.status
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Backend HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "AI result:",
+            data
+        );
+
+
+        if (
+            !data.success &&
+            data.error
+        ) {
+
+            throw new Error(
+                data.error
+            );
+
+        }
+
+
+        displayResults(
+            data.detections
+        );
+
+    }
+
+    catch(error) {
+
+        console.error(
+            "Backend error:",
+            error
+        );
+
+        status.className =
+            "error";
+
+        status.textContent =
+            "Could not connect to AI backend: " +
+            error.message;
+
+    }
+
+}
+
+
+// ==========================================
+// DISPLAY RESULTS
+// ==========================================
+
+function displayResults(
+    detections
+) {
+
+    detectionsDiv.innerHTML =
+        "";
+
+
+    if (
+        !detections ||
+        detections.length === 0
+    ) {
+
+        status.className =
+            "";
+
+        status.textContent =
+            "No electronics component detected.";
+
+        return;
+
+    }
+
+
+    status.className =
+        "success";
+
+    status.textContent =
+        detections.length +
+        " component(s) detected.";
+
+
+    detections.forEach(
+        function(detection) {
+
+            const component =
+                document.createElement(
+                    "div"
+                );
+
+
+            component.className =
+                "component";
+
+
+            const name =
+                document.createElement(
+                    "div"
+                );
+
+
+            name.className =
+                "component-name";
+
+
+            name.textContent =
+                "🔧 " +
+                detection.class;
+
+
+            const confidence =
+                document.createElement(
+                    "div"
+                );
+
+
+            confidence.className =
+                "confidence";
+
+
+            confidence.textContent =
+                "Confidence: " +
+                detection.confidence +
+                "%";
+
+
+            component.appendChild(
+                name
+            );
+
+            component.appendChild(
+                confidence
+            );
+
+
+            detectionsDiv.appendChild(
+                component
+            );
 
         }
     );
 
-
-    // ==========================================
-    // DETECT COMPONENT
-    // ==========================================
-
-    detectButton.addEventListener(
-        "click",
-        async function () {
-
-            if (!cameraStarted) {
-
-                status.textContent =
-                    "Start the camera first.";
-
-                return;
-
-            }
-
-
-            try {
-
-                detectButton.disabled = true;
-
-                status.className = "loading";
-
-                status.textContent =
-                    "AI is analyzing the image...";
-
-                detectionsDiv.innerHTML = "";
-
-
-                // ----------------------------------
-                // Get video dimensions
-                // ----------------------------------
-
-                const width =
-                    video.videoWidth;
-
-                const height =
-                    video.videoHeight;
-
-
-                if (width === 0 || height === 0) {
-
-                    throw new Error(
-                        "Camera image is not ready"
-                    );
-
-                }
-
-
-                // ----------------------------------
-                // Draw current camera frame
-                // ----------------------------------
-
-                canvas.width = width;
-
-                canvas.height = height;
-
-
-                const context =
-                    canvas.getContext("2d");
-
-
-                context.drawImage(
-                    video,
-                    0,
-                    0,
-                    width,
-                    height
-                );
-
-
-                // ----------------------------------
-                // Convert image to JPEG
-                // ----------------------------------
-
-                const blob =
-                    await new Promise(
-                        resolve =>
-
-                            canvas.toBlob(
-                                resolve,
-                                "image/jpeg",
-                                0.85
-                            )
-                    );
-
-
-                // ----------------------------------
-                // Create form data
-                // ----------------------------------
-
-                const formData =
-                    new FormData();
-
-                formData.append(
-                    "image",
-                    blob,
-                    "camera.jpg"
-                );
-
-
-                console.log(
-                    "Sending image to:",
-                    API_URL
-                );
-
-
-                // ----------------------------------
-                // Send to Render
-                // ----------------------------------
-
-                const response =
-                    await fetch(
-                        API_URL,
-                        {
-                            method: "POST",
-                            body: formData
-                        }
-                    );
-
-
-                console.log(
-                    "Response status:",
-                    response.status
-                );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Backend returned HTTP " +
-                        response.status
-                    );
-
-                }
-
-
-                const data =
-                    await response.json();
-
-
-                console.log(
-                    "AI response:",
-                    data
-                );
-
-
-                // ----------------------------------
-                // Display results
-                // ----------------------------------
-
-                if (
-                    !data.success &&
-                    data.error
-                ) {
-
-                    throw new Error(
-                        data.error
-                    );
-
-                }
-
-
-                if (
-                    !data.detections ||
-                    data.detections.length === 0
-                ) {
-
-                    status.className = "";
-
-                    status.textContent =
-                        "No electronics component detected.";
-
-                    return;
-
-                }
-
-
-                status.className =
-                    "success";
-
-                status.textContent =
-                    data.detections.length +
-                    " component(s) detected.";
-
-
-                // ----------------------------------
-                // Show each detection
-                // ----------------------------------
-
-                data.detections.forEach(
-                    function (detection) {
-
-                        const component =
-                            document.createElement(
-                                "div"
-                            );
-
-                        component.className =
-                            "component";
-
-
-                        const name =
-                            document.createElement(
-                                "div"
-                            );
-
-                        name.className =
-                            "component-name";
-
-                        name.textContent =
-                            "🔧 " +
-                            detection.class;
-
-
-                        const confidence =
-                            document.createElement(
-                                "div"
-                            );
-
-                        confidence.className =
-                            "confidence";
-
-                        confidence.textContent =
-                            "Confidence: " +
-                            detection.confidence +
-                            "%";
-
-
-                        component.appendChild(
-                            name
-                        );
-
-                        component.appendChild(
-                            confidence
-                        );
-
-
-                        detectionsDiv.appendChild(
-                            component
-                        );
-
-                    }
-                );
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "AI backend error:",
-                    error
-                );
-
-                status.className =
-                    "error";
-
-                status.textContent =
-                    "Could not connect to AI backend: " +
-                    error.message;
-
-            }
-
-            finally {
-
-                detectButton.disabled =
-                    false;
-
-            }
-
-        }
-    );
+}
 
 </script>
-
 
 </body>
 
